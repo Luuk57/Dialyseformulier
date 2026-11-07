@@ -2,127 +2,223 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Groot Dialyse</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a73e8">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 15px; background-color: #f4f7f6; color: #333; }
-    h2 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 8px; }
-    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .card h3 { margin-top: 0; color: #444; font-size: 1.05em; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-    label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85em; color: #555; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
-    input[readonly] { background-color: #e9ecef; }
-    button { background-color: #1a73e8; color: white; border: none; padding: 14px; font-size: 1em; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-    button:disabled { background-color: #9aa0a6; }
-    #status { margin-top: 15px; font-weight: bold; text-align: center; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      margin: 0; 
+      padding: 12px; 
+      background-color: #f1f5f9; 
+      color: #1e293b; 
+    }
+    header {
+      background-color: #0284c7;
+      color: white;
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+    .card { 
+      background: #ffffff; 
+      border-radius: 14px; 
+      padding: 16px; 
+      margin-bottom: 14px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+      border: 1px solid #e2e8f0;
+    }
+    .card h2 { 
+      margin-top: 0; 
+      margin-bottom: 12px; 
+      color: #0369a1; 
+      font-size: 1rem; 
+      font-weight: 600;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    .form-group { margin-bottom: 12px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { 
+      display: block; 
+      font-weight: 600; 
+      margin-bottom: 6px; 
+      font-size: 0.85rem; 
+      color: #475569; 
+    }
+    input, select, textarea { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 10px; 
+      font-size: 1rem; 
+      background-color: #f8fafc;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #0284c7;
+      background-color: #ffffff;
+    }
+    input[readonly] { 
+      background-color: #e2e8f0; 
+      color: #64748b;
+      font-weight: bold;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    button { 
+      background-color: #0284c7; 
+      color: white; 
+      border: none; 
+      padding: 16px; 
+      font-size: 1.05rem; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      width: 100%; 
+      font-weight: 700; 
+      box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.3);
+      transition: background-color 0.2s;
+    }
+    button:active { background-color: #0369a1; }
+    button:disabled { background-color: #94a3b8; box-shadow: none; }
+    #status { 
+      margin-top: 14px; 
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600; 
+      text-align: center; 
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
 
-  <h2>💉 Groot Dialyse Formulier</h2>
+  <header>
+    <h1>🩺 Groot Dialyse Invoer</h1>
+  </header>
 
   <form id="dialyseForm">
+    
+    <!-- Algemeen -->
     <div class="card">
-      <h3>📅 Algemene Gegevens</h3>
-      <div class="grid">
-        <div>
-          <label for="afspraakDatumTijd">Afspraak Datum/Tijd</label>
-          <input type="datetime-local" id="afspraakDatumTijd">
-        </div>
-        <div>
-          <label for="verpleegkundige">Verpleegkundige</label>
-          <input type="text" id="verpleegkundige" placeholder="Naam verpleegkundige">
-        </div>
-        <div>
-          <label for="startTijd">Start Datum/Tijd</label>
+      <h2>📅 Datum & Tijd</h2>
+      <div class="form-group">
+        <label for="afspraakDatumTijd">Afspraak Datum & Tijd</label>
+        <input type="datetime-local" id="afspraakDatumTijd">
+      </div>
+      <div class="form-group">
+        <label for="verpleegkundige">Verpleegkundige</label>
+        <input type="text" id="verpleegkundige" placeholder="Naam verpleegkundige">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="startTijd">Start Tijd</label>
           <input type="datetime-local" id="startTijd">
         </div>
-        <div>
-          <label for="eindTijd">Eind Datum/Tijd</label>
+        <div class="form-group">
+          <label for="eindTijd">Eind Tijd</label>
           <input type="datetime-local" id="eindTijd">
         </div>
       </div>
     </div>
 
+    <!-- Gewichten & UF -->
     <div class="card">
-      <h3>⚖️ Gewichten & UF</h3>
-      <div class="grid">
-        <div>
-          <label for="streefGewicht">Streefgewicht (kg)</label>
-          <input type="number" step="0.1" id="streefGewicht" value="109.0" placeholder="109.0" oninput="berekenUFAdvies()">
+      <h2>⚖️ Gewichten & UF</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="streefGewicht">Streef (kg)</label>
+          <input type="number" step="0.1" id="streefGewicht" value="109.0" oninput="berekenUFAdvies()">
         </div>
-        <div>
-          <label for="gewichtVoor">Gewicht voor (kg)</label>
-          <input type="number" step="0.1" id="gewichtVoor" placeholder="112.5" oninput="berekenUFAdvies()">
+        <div class="form-group">
+          <label for="gewichtVoor">Voor (kg)</label>
+          <input type="number" step="0.1" id="gewichtVoor" placeholder="0.0" oninput="berekenUFAdvies()">
         </div>
-        <div>
-          <label for="gewichtNa">Gewicht na (kg)</label>
-          <input type="number" step="0.1" id="gewichtNa">
+      </div>
+      <div class="grid-2" style="margin-top: 10px;">
+        <div class="form-group">
+          <label for="gewichtNa">Na (kg)</label>
+          <input type="number" step="0.1" id="gewichtNa" placeholder="0.0">
         </div>
-        <div>
-          <label for="ufAdvies">UF advies (berekend)</label>
-          <input type="number" step="0.1" id="ufAdvies" readonly placeholder="Automatisch">
+        <div class="form-group">
+          <label for="ufAdvies">UF Advies</label>
+          <input type="number" step="0.1" id="ufAdvies" readonly placeholder="Auto">
         </div>
-        <div>
-          <label for="ufIngevoerd">UF ingevoerd</label>
+      </div>
+      <div class="grid-2" style="margin-top: 10px;">
+        <div class="form-group">
+          <label for="ufIngevoerd">UF Ingevoerd</label>
           <input type="number" step="0.1" id="ufIngevoerd">
         </div>
-        <div>
-          <label for="ufWerkelijk">UF werkelijk</label>
+        <div class="form-group">
+          <label for="ufWerkelijk">UF Werkelijk</label>
           <input type="number" step="0.1" id="ufWerkelijk">
         </div>
       </div>
     </div>
 
+    <!-- Medicatie -->
     <div class="card">
-      <h3>💊 Medicatie</h3>
-      <div class="grid">
-        <div>
-          <label for="fragmin2500">FRAGMIN 2500</label>
+      <h2>💊 Medicatie</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="fragmin2500">Fragmin 2500</label>
           <input type="text" id="fragmin2500">
         </div>
-        <div>
-          <label for="fragmin5000">FRAGMIN 5000</label>
+        <div class="form-group">
+          <label for="fragmin5000">Fragmin 5000</label>
           <input type="text" id="fragmin5000">
         </div>
-        <div>
+      </div>
+      <div class="grid-2" style="margin-top: 10px;">
+        <div class="form-group">
           <label for="epo">Epo</label>
           <input type="text" id="epo">
         </div>
-        <div>
+        <div class="form-group">
           <label for="ijzer">IJzer</label>
           <input type="text" id="ijzer">
         </div>
       </div>
     </div>
 
+    <!-- Shunt & Opmerkingen -->
     <div class="card">
-      <h3>🩺 Shunt & Opmerkingen</h3>
-      <div class="grid">
-        <div>
-          <label for="prikdag">Prikdag</label>
-          <input type="text" id="prikdag">
-        </div>
-        <div>
+      <h2>🩸 Shunt & Notities</h2>
+      <div class="form-group">
+        <label for="prikdag">Prikdag</label>
+        <input type="text" id="prikdag">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
           <label for="shuntflow">Shuntflow</label>
           <input type="text" id="shuntflow">
         </div>
-        <div>
-          <label for="shuntflowUitkomst">Shuntflow uitkomst</label>
+        <div class="form-group">
+          <label for="shuntflowUitkomst">Uitkomst</label>
           <input type="text" id="shuntflowUitkomst">
         </div>
       </div>
-      <div style="margin-top: 10px;">
+      <div class="form-group" style="margin-top: 10px;">
         <label for="opmerking">Opmerking</label>
-        <textarea id="opmerking" rows="3"></textarea>
+        <textarea id="opmerking" rows="3" placeholder="Bijzonderheden..."></textarea>
       </div>
     </div>
 
-    <button type="submit" id="btnSubmit">💾 Opslaan in Google Sheet</button>
+    <button type="submit" id="btnSubmit">💾 Opslaan in Sheet</button>
   </form>
 
   <div id="status"></div>
@@ -147,7 +243,8 @@
 
       btn.disabled = true;
       btn.innerText = "Bezig met opslaan...";
-      status.style.color = "#333";
+      status.style.backgroundColor = "#e2e8f0";
+      status.style.color = "#334155";
       status.innerText = "Verzenden naar Google Sheet...";
 
       const payload = {
@@ -178,18 +275,21 @@
         body: JSON.stringify(payload)
       })
       .then(() => {
-        status.style.color = "#2e7d32";
-        status.innerText = "Gegevens succesvol verzonden!";
+        status.style.backgroundColor = "#dcfce7";
+        status.style.color = "#166534";
+        status.innerText = "✓ Gegevens succesvol opgeslagen!";
         document.getElementById('dialyseForm').reset();
         document.getElementById('streefGewicht').value = "109.0";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       })
       .catch(err => {
-        status.style.color = "#c62828";
-        status.innerText = "Fout bij verzenden: " + err;
+        status.style.backgroundColor = "#fee2e2";
+        status.style.color = "#991b1b";
+        status.innerText = "Fout bij opslaan: " + err;
       })
       .finally(() => {
         btn.disabled = false;
-        btn.innerText = "💾 Opslaan in Google Sheet";
+        btn.innerText = "💾 Opslaan in Sheet";
       });
     });
 
