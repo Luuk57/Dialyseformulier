@@ -436,6 +436,35 @@
       return Array.from(checkboxes).map(cb => cb.value).join(', ');
     }
 
+    function pasCheckboxesAan(naam, waardenString) {
+      const waarden = waardenString ? waardenString.split(', ') : [];
+      const checkboxes = document.querySelectorAll(`input[name="${naam}"]`);
+      checkboxes.forEach(cb => {
+        cb.checked = waarden.includes(cb.value);
+      });
+    }
+
+    function pasVerpleegkundigenAan(waardenString) {
+      const namen = waardenString ? waardenString.split(', ') : [];
+      const checkboxes = document.querySelectorAll('#vpLijst input[type="checkbox"]');
+      
+      checkboxes.forEach(cb => {
+        cb.checked = namen.includes(cb.value);
+      });
+
+      // Voeg namen toe die nog niet in de lijst staan
+      namen.forEach(naam => {
+        if (naam && !Array.from(checkboxes).some(cb => cb.value === naam)) {
+          const lijst = document.getElementById('vpLijst');
+          const id = 'vp_' + Date.now() + Math.random().toString(36).substring(2, 5);
+          const div = document.createElement('div');
+          div.className = 'vp-item';
+          div.innerHTML = `<input type="checkbox" value="${naam}" id="${id}" checked><label for="${id}">${naam}</label>`;
+          lijst.appendChild(div);
+        }
+      });
+    }
+
     function pasKleurToe(element, waarde) {
       element.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
       if (isNaN(waarde) || waarde === '' || waarde === null) return;
@@ -492,7 +521,7 @@
       }
     }
 
-    // Formulieren opslaan
+    // Formulieren opslaan / bijwerken op exacte positie
     document.getElementById('dialyseForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const btn = document.getElementById('btnSubmit');
@@ -528,10 +557,12 @@
 
       const bewerkIndex = parseInt(document.getElementById('bewerkIndex').value);
       if (bewerkIndex >= 0) {
+        // Op EXACT dezelfde positie opslaan
         lokaalGegevens[bewerkIndex] = payload;
         document.getElementById('bewerkIndex').value = "-1";
       } else {
-        lokaalGegevens.unshift(payload); // Nieuwste bovenaan toevoegen
+        // Nieuw item toevoegen bovenaan
+        lokaalGegevens.unshift(payload);
       }
 
       localStorage.setItem('dialyseHistorie', JSON.stringify(lokaalGegevens));
@@ -546,7 +577,7 @@
       .then(() => {
         status.style.backgroundColor = "#dcfce7";
         status.style.color = "#166534";
-        status.innerText = "✓ Gegevens succesvol opgeslagen!";
+        status.innerText = bewerkIndex >= 0 ? "✓ Meting succesvol bijgewerkt op dezelfde positie!" : "✓ Gegevens succesvol opgeslagen!";
         
         const huidigStreef = document.getElementById('streefGewicht').value;
         document.getElementById('dialyseForm').reset();
@@ -555,6 +586,7 @@
         document.getElementById('f5000_1').checked = true;
 
         document.getElementById('duurWeergave').value = "";
+        btn.innerText = "💾 Opslaan in Sheet";
         herberekenAlles();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       })
@@ -565,7 +597,6 @@
       })
       .finally(() => {
         btn.disabled = false;
-        btn.innerText = "💾 Opslaan in Sheet";
       });
     });
 
@@ -616,9 +647,16 @@
       document.getElementById('shuntflowUitkomst').value = item.shuntflowUitkomst || '';
       document.getElementById('opmerking').value = item.opmerking || '';
 
+      pasVerpleegkundigenAan(item.verpleegkundige);
+      pasCheckboxesAan('f2500', item.fragmin2500);
+      pasCheckboxesAan('f5000', item.fragmin5000);
+
       berekenDuur();
       herberekenAlles();
+
+      document.getElementById('btnSubmit').innerText = "✏️ Meting Bijwerken op Positie " + (index + 1);
       openTab('invoerTab', document.querySelectorAll('.tab-btn')[0]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function verwijderItem(index) {
