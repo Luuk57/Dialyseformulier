@@ -79,6 +79,38 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    .vp-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+      background-color: #f8fafc;
+    }
+    .vp-list {
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    .vp-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 0.95rem;
+    }
+    .vp-item input[type="checkbox"] {
+      width: auto;
+      transform: scale(1.2);
+    }
+    .add-vp-flex {
+      display: flex;
+      gap: 6px;
+    }
+    .add-vp-flex button {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      width: auto;
+      white-space: nowrap;
+    }
     button { 
       background-color: #0284c7; 
       color: white; 
@@ -119,19 +151,36 @@
         <label for="afspraakDatumTijd">Afspraak Datum & Tijd</label>
         <input type="datetime-local" id="afspraakDatumTijd">
       </div>
+      
+      <!-- Verpleegkundige met meerdere opties en toevoegen -->
       <div class="form-group">
-        <label for="verpleegkundige">Verpleegkundige</label>
-        <input type="text" id="verpleegkundige" placeholder="Naam verpleegkundige">
+        <label>Verpleegkundige(n)</label>
+        <div class="vp-box">
+          <div class="vp-list" id="vpLijst">
+            <div class="vp-item"><input type="checkbox" value="Jan" id="vp_jan"><label for="vp_jan">Jan</label></div>
+            <div class="vp-item"><input type="checkbox" value="Maria" id="vp_maria"><label for="vp_maria">Maria</label></div>
+          </div>
+          <div class="add-vp-flex">
+            <input type="text" id="nieuweVpNaam" placeholder="Nieuwe naam..." style="padding: 6px 10px; font-size: 0.9rem;">
+            <button type="button" onclick="voegVerpleegkundigeToe()">+ Voeg toe</button>
+          </div>
+        </div>
       </div>
+
       <div class="grid-2">
         <div class="form-group">
           <label for="startTijd">Start Tijd</label>
-          <input type="datetime-local" id="startTijd">
+          <input type="datetime-local" id="startTijd" oninput="berekenDuur()">
         </div>
         <div class="form-group">
-          <label for="eindTijd">Eind Tijd</label>
-          <input type="datetime-local" id="eindTijd">
+          <label for="eindTijd">Eind Tijd (Stop)</label>
+          <input type="datetime-local" id="eindTijd" oninput="berekenDuur()">
         </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 10px;">
+        <label for="duurWeergave">Berekende Duur (Stop - Start)</label>
+        <input type="text" id="duurWeergave" readonly placeholder="0u 0m">
       </div>
     </div>
 
@@ -226,6 +275,48 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVtVPkS5EVtSjfA55YMouZYh3qb-2fIhCPHepTqu4pr3EIlpKhDQKkPRotbsTnX6ytww/exec";
 
+    function berekenDuur() {
+      const start = document.getElementById('startTijd').value;
+      const eind = document.getElementById('eindTijd').value;
+      const duurVeld = document.getElementById('duurWeergave');
+
+      if (start && eind) {
+        const d1 = new Date(start);
+        const d2 = new Date(eind);
+        const diffMs = d2 - d1;
+
+        if (diffMs > 0) {
+          const diffHrs = Math.floor(diffMs / 3600000);
+          const diffMins = Math.round((diffMs % 3600000) / 60000);
+          duurVeld.value = `${diffHrs}u ${diffMins}m`;
+          return;
+        }
+      }
+      duurVeld.value = '';
+    }
+
+    function voegVerpleegkundigeToe() {
+      const invoer = document.getElementById('nieuweVpNaam');
+      const naam = invoer.value.trim();
+      if (!naam) return;
+
+      const lijst = document.getElementById('vpLijst');
+      const id = 'vp_' + Date.now();
+      
+      const div = document.createElement('div');
+      div.className = 'vp-item';
+      div.innerHTML = `<input type="checkbox" value="${naam}" id="${id}" checked><label for="${id}">${naam}</label>`;
+      
+      lijst.appendChild(div);
+      invoer.value = '';
+    }
+
+    function haalGeselecteerdeVerpleegkundigen() {
+      const checkboxes = document.querySelectorAll('#vpLijst input[type="checkbox"]:checked');
+      const namen = Array.from(checkboxes).map(cb => cb.value);
+      return namen.join(', ');
+    }
+
     function berekenUFAdvies() {
       const voor = parseFloat(document.getElementById('gewichtVoor').value);
       const streef = parseFloat(document.getElementById('streefGewicht').value);
@@ -249,9 +340,10 @@
 
       const payload = {
         afspraakDatumTijd: document.getElementById('afspraakDatumTijd').value,
-        verpleegkundige: document.getElementById('verpleegkundige').value,
+        verpleegkundige: haalGeselecteerdeVerpleegkundigen(),
         startTijd: document.getElementById('startTijd').value,
         eindTijd: document.getElementById('eindTijd').value,
+        duur: document.getElementById('duurWeergave').value,
         streefGewicht: document.getElementById('streefGewicht').value,
         gewichtVoor: document.getElementById('gewichtVoor').value,
         gewichtNa: document.getElementById('gewichtNa').value,
@@ -280,6 +372,7 @@
         status.innerText = "✓ Gegevens succesvol opgeslagen!";
         document.getElementById('dialyseForm').reset();
         document.getElementById('streefGewicht').value = "109.0";
+        document.getElementById('duurWeergave').value = "";
         window.scrollTo({ top: 0, behavior: 'smooth' });
       })
       .catch(err => {
