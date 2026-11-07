@@ -9,6 +9,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="icon.png">
+  
+  <!-- Bibliotheken voor PDF en Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { 
@@ -28,6 +33,33 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+    
+    /* Tabs Navigatie */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background-color: #e2e8f0;
+      color: #475569;
+      font-weight: 700;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: none;
+    }
+    .tab-btn.active {
+      background-color: #0284c7;
+      color: white;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     .card { 
       background: #ffffff; 
       border-radius: 14px; 
@@ -75,48 +107,19 @@
       font-weight: bold;
     }
 
-    /* Kleurcodering voor UF velden */
+    /* UF Kleurcodering */
     .uf-groen { background-color: #dcfce7 !important; color: #166534 !important; font-weight: bold; border-color: #86efac !important; }
     .uf-oranje { background-color: #ffedd5 !important; color: #9a3412 !important; font-weight: bold; border-color: #fdba74 !important; }
     .uf-rood { background-color: #fee2e2 !important; color: #991b1b !important; font-weight: bold; border-color: #fca5a5 !important; }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .vp-box {
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 10px;
-      background-color: #f8fafc;
-    }
-    .vp-list {
-      max-height: 120px;
-      overflow-y: auto;
-      margin-bottom: 8px;
-    }
-    .vp-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0;
-      font-size: 0.95rem;
-    }
-    .vp-item input[type="checkbox"], .med-check-group input[type="checkbox"] {
-      width: auto;
-      transform: scale(1.2);
-    }
-    .add-vp-flex {
-      display: flex;
-      gap: 6px;
-    }
-    .add-vp-flex button {
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      width: auto;
-      white-space: nowrap;
-    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .vp-box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background-color: #f8fafc; }
+    .vp-list { max-height: 120px; overflow-y: auto; margin-bottom: 8px; }
+    .vp-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.95rem; }
+    .vp-item input[type="checkbox"], .med-check-group input[type="checkbox"] { width: auto; transform: scale(1.2); }
+    .add-vp-flex { display: flex; gap: 6px; }
+    .add-vp-flex button { padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap; }
+    
     .med-check-group {
       display: flex;
       flex-direction: column;
@@ -126,13 +129,9 @@
       border-radius: 10px;
       padding: 10px;
     }
-    .med-check-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-    }
-    button { 
+    .med-check-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+
+    button.btn-main { 
       background-color: #0284c7; 
       color: white; 
       border: none; 
@@ -143,186 +142,239 @@
       width: 100%; 
       font-weight: 700; 
       box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.3);
-      transition: background-color 0.2s;
     }
-    button:active { background-color: #0369a1; }
     button:disabled { background-color: #94a3b8; box-shadow: none; }
-    #status { 
-      margin-top: 14px; 
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: 600; 
-      text-align: center; 
-      font-size: 0.95rem;
-    }
+    #status { margin-top: 14px; padding: 12px; border-radius: 10px; font-weight: 600; text-align: center; font-size: 0.95rem; }
+
+    /* Overzicht tabel opmaak */
+    .export-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .export-btn { flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
+    .btn-pdf { background-color: #dc2626; }
+    .btn-excel { background-color: #16a34a; }
+    
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 8px; border: 1px solid #cbd5e1; text-align: left; white-space: nowrap; }
+    th { background-color: #0284c7; color: white; }
+    .btn-actie { padding: 4px 8px; font-size: 0.75rem; border: none; border-radius: 6px; cursor: pointer; color: white; margin-right: 2px; }
+    .btn-edit { background-color: #f59e0b; }
+    .btn-del { background-color: #ef4444; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>🩺 Groot Dialyse Invoer</h1>
+    <h1>🩺 Groot Dialyse App</h1>
   </header>
 
-  <form id="dialyseForm">
-    
-    <!-- Algemeen -->
-    <div class="card">
-      <h2>📅 Datum & Tijd</h2>
-      <div class="form-group">
-        <label for="afspraakDatumTijd">Afspraak Datum & Tijd</label>
-        <input type="datetime-local" id="afspraakDatumTijd">
-      </div>
-      
-      <!-- Verpleegkundige met meerdere opties en toevoegen -->
-      <div class="form-group">
-        <label>Verpleegkundige(n)</label>
-        <div class="vp-box">
-          <div class="vp-list" id="vpLijst">
-            <div class="vp-item"><input type="checkbox" value="Jan" id="vp_jan"><label for="vp_jan">Jan</label></div>
-            <div class="vp-item"><input type="checkbox" value="Maria" id="vp_maria"><label for="vp_maria">Maria</label></div>
-          </div>
-          <div class="add-vp-flex">
-            <input type="text" id="nieuweVpNaam" placeholder="Nieuwe naam..." style="padding: 6px 10px; font-size: 0.9rem;">
-            <button type="button" onclick="voegVerpleegkundigeToe()">+ Voeg toe</button>
-          </div>
-        </div>
-      </div>
+  <!-- Navigatietabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="openTab('invoerTab', this)">📝 Invoer</button>
+    <button class="tab-btn" onclick="openTab('overzichtTab', this)">📊 Overzicht</button>
+  </div>
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="startTijd">Start Tijd</label>
-          <input type="datetime-local" id="startTijd" oninput="berekenDuur()">
-        </div>
-        <div class="form-group">
-          <label for="eindTijd">Eind Tijd (Stop)</label>
-          <input type="datetime-local" id="eindTijd" oninput="berekenDuur()">
-        </div>
-      </div>
+  <!-- TAB 1: INVOERFORMULIER -->
+  <div id="invoerTab" class="tab-content active">
+    <form id="dialyseForm">
+      <input type="hidden" id="bewerkIndex" value="-1">
 
-      <div class="form-group" style="margin-top: 10px;">
-        <label for="duurWeergave">Berekende Duur (Stop - Start)</label>
-        <input type="text" id="duurWeergave" readonly placeholder="0u 0m">
-      </div>
-    </div>
-
-    <!-- Gewichten & UF -->
-    <div class="card">
-      <h2>⚖️ Gewichten & UF</h2>
-      <div class="grid-2">
+      <div class="card">
+        <h2>📅 Datum & Tijd</h2>
         <div class="form-group">
-          <label for="streefGewicht">Streef (kg)</label>
-          <input type="number" step="0.1" id="streefGewicht" oninput="updateStreefGewicht()">
+          <label for="afspraakDatumTijd">Afspraak Datum & Tijd</label>
+          <input type="datetime-local" id="afspraakDatumTijd">
         </div>
+        
         <div class="form-group">
-          <label for="gewichtVoor">Voor (kg)</label>
-          <input type="number" step="0.1" id="gewichtVoor" placeholder="0.0" oninput="herberekenAlles()">
-        </div>
-      </div>
-      <div class="grid-2" style="margin-top: 10px;">
-        <div class="form-group">
-          <label for="gewichtNa">Na (kg)</label>
-          <input type="number" step="0.1" id="gewichtNa" placeholder="0.0" oninput="herberekenAlles()">
-        </div>
-        <div class="form-group">
-          <label for="ufAdvies">UF Advies</label>
-          <input type="number" step="0.1" id="ufAdvies" readonly placeholder="Auto">
-        </div>
-      </div>
-      <div class="grid-2" style="margin-top: 10px;">
-        <div class="form-group">
-          <label for="ufIngevoerd">UF Ingevoerd</label>
-          <input type="number" step="0.1" id="ufIngevoerd" oninput="herberekenAlles()">
-        </div>
-        <div class="form-group">
-          <label for="ufWerkelijk">UF Werkelijk (Voor - Na)</label>
-          <input type="number" step="0.1" id="ufWerkelijk" readonly placeholder="Auto">
-        </div>
-      </div>
-    </div>
-
-    <!-- Medicatie -->
-    <div class="card">
-      <h2>💊 Medicatie</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Fragmin 2500</label>
-          <div class="med-check-group">
-            <div class="med-check-item"><input type="checkbox" name="f2500" value="1 toediening" id="f2500_1" checked><label for="f2500_1">1 toediening</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 2" id="f2500_2"><label for="f2500_2">Optie 2</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 3" id="f2500_3"><label for="f2500_3">Optie 3</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 4" id="f2500_4"><label for="f2500_4">Optie 4</label></div>
+          <label>Verpleegkundige(n)</label>
+          <div class="vp-box">
+            <div class="vp-list" id="vpLijst">
+              <div class="vp-item"><input type="checkbox" value="Jan" id="vp_jan"><label for="vp_jan">Jan</label></div>
+              <div class="vp-item"><input type="checkbox" value="Maria" id="vp_maria"><label for="vp_maria">Maria</label></div>
+            </div>
+            <div class="add-vp-flex">
+              <input type="text" id="nieuweVpNaam" placeholder="Nieuwe naam..." style="padding: 6px 10px; font-size: 0.9rem;">
+              <button type="button" onclick="voegVerpleegkundigeToe()">+ Voeg toe</button>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label>Fragmin 5000</label>
-          <div class="med-check-group">
-            <div class="med-check-item"><input type="checkbox" name="f5000" value="1 toediening" id="f5000_1" checked><label for="f5000_1">1 toediening</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 2" id="f5000_2"><label for="f5000_2">Optie 2</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 3" id="f5000_3"><label for="f5000_3">Optie 3</label></div>
-            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 4" id="f5000_4"><label for="f5000_4">Optie 4</label></div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="startTijd">Start Tijd</label>
+            <input type="datetime-local" id="startTijd" oninput="berekenDuur()">
+          </div>
+          <div class="form-group">
+            <label for="eindTijd">Eind Tijd (Stop)</label>
+            <input type="datetime-local" id="eindTijd" oninput="berekenDuur()">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="duurWeergave">Berekende Duur (Stop - Start)</label>
+          <input type="text" id="duurWeergave" readonly placeholder="0u 0m">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚖️ Gewichten & UF</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="streefGewicht">Streef (kg)</label>
+            <input type="number" step="0.1" id="streefGewicht" oninput="updateStreefGewicht()">
+          </div>
+          <div class="form-group">
+            <label for="gewichtVoor">Voor (kg)</label>
+            <input type="number" step="0.1" id="gewichtVoor" placeholder="0.0" oninput="herberekenAlles()">
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top: 10px;">
+          <div class="form-group">
+            <label for="gewichtNa">Na (kg)</label>
+            <input type="number" step="0.1" id="gewichtNa" placeholder="0.0" oninput="herberekenAlles()">
+          </div>
+          <div class="form-group">
+            <label for="ufAdvies">UF Advies</label>
+            <input type="number" step="0.1" id="ufAdvies" readonly placeholder="Auto">
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top: 10px;">
+          <div class="form-group">
+            <label for="ufIngevoerd">UF Ingevoerd</label>
+            <input type="number" step="0.1" id="ufIngevoerd" oninput="herberekenAlles()">
+          </div>
+          <div class="form-group">
+            <label for="ufWerkelijk">UF Werkelijk (Voor - Na)</label>
+            <input type="number" step="0.1" id="ufWerkelijk" readonly placeholder="Auto">
           </div>
         </div>
       </div>
-      <div class="grid-2" style="margin-top: 10px;">
-        <div class="form-group">
-          <label for="epo">Epo</label>
-          <select id="epo">
-            <option value="Nee" selected>Nee</option>
-            <option value="Ja">Ja</option>
-          </select>
+
+      <div class="card">
+        <h2>💊 Medicatie</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Fragmin 2500</label>
+            <div class="med-check-group">
+              <div class="med-check-item"><input type="checkbox" name="f2500" value="1x" id="f2500_1" checked><label for="f2500_1">1x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f2500" value="2x" id="f2500_2"><label for="f2500_2">2x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f2500" value="3x" id="f2500_3"><label for="f2500_3">3x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f2500" value="4x" id="f2500_4"><label for="f2500_4">4x</label></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Fragmin 5000</label>
+            <div class="med-check-group">
+              <div class="med-check-item"><input type="checkbox" name="f5000" value="1x" id="f5000_1" checked><label for="f5000_1">1x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f5000" value="2x" id="f5000_2"><label for="f5000_2">2x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f5000" value="3x" id="f5000_3"><label for="f5000_3">3x</label></div>
+              <div class="med-check-item"><input type="checkbox" name="f5000" value="4x" id="f5000_4"><label for="f5000_4">4x</label></div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="ijzer">IJzer</label>
-          <select id="ijzer">
-            <option value="Nee" selected>Nee</option>
-            <option value="Ja">Ja</option>
-          </select>
+        <div class="grid-2" style="margin-top: 10px;">
+          <div class="form-group">
+            <label for="epo">Epo</label>
+            <select id="epo">
+              <option value="Nee" selected>Nee</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ijzer">IJzer</label>
+            <select id="ijzer">
+              <option value="Nee" selected>Nee</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Shunt & Opmerkingen -->
+      <div class="card">
+        <h2>🩸 Shunt & Notities</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="prikdag">Prikdag</label>
+            <select id="prikdag">
+              <option value="Nee" selected>Nee</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="shuntflow">Shuntflow</label>
+            <select id="shuntflow">
+              <option value="Nee" selected>Nee</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="shuntflowUitkomst">Shuntflow Uitkomst (max 4 cijfers)</label>
+          <input type="number" id="shuntflowUitkomst" placeholder="bijv. 1200" oninput="valideerVierCijfers(this)">
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="opmerking">Bijzonderheden</label>
+          <textarea id="opmerking" rows="3" placeholder="Bijzonderheden..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" id="btnSubmit" class="btn-main">💾 Opslaan in Sheet</button>
+    </form>
+    <div id="status"></div>
+  </div>
+
+  <!-- TAB 2: OVERZICHT & EXPORT -->
+  <div id="overzichtTab" class="tab-content">
     <div class="card">
-      <h2>🩸 Shunt & Notities</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="prikdag">Prikdag</label>
-          <select id="prikdag">
-            <option value="Nee" selected>Nee</option>
-            <option value="Ja">Ja</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="shuntflow">Shuntflow</label>
-          <select id="shuntflow">
-            <option value="Nee" selected>Nee</option>
-            <option value="Ja">Ja</option>
-          </select>
-        </div>
+      <h2>📋 Dialyse Overzicht (Nieuwste bovenaan)</h2>
+      <div class="export-bar">
+        <button class="export-btn btn-pdf" onclick="exporteerPDF()">📄 Exporteer PDF</button>
+        <button class="export-btn btn-excel" onclick="exporteerExcel()">📊 Exporteer Excel</button>
       </div>
-      <div class="form-group" style="margin-top: 10px;">
-        <label for="shuntflowUitkomst">Shuntflow Uitkomst (max 4 cijfers)</label>
-        <input type="number" id="shuntflowUitkomst" placeholder="bijv. 1200" oninput="valideerVierCijfers(this)">
-      </div>
-      <div class="form-group" style="margin-top: 10px;">
-        <label for="opmerking">Bijzonderheden</label>
-        <textarea id="opmerking" rows="3" placeholder="Bijzonderheden..."></textarea>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Acties</th>
+              <th>Afspraak</th>
+              <th>Verpleegkundige</th>
+              <th>Duur</th>
+              <th>Voor</th>
+              <th>Na</th>
+              <th>UF Werkelijk</th>
+              <th>Opmerking</th>
+            </tr>
+          </thead>
+          <tbody id="tabelInhoud">
+            <!-- Dynamische rijen -->
+          </tbody>
+        </table>
       </div>
     </div>
-
-    <button type="submit" id="btnSubmit">💾 Opslaan in Sheet</button>
-  </form>
-
-  <div id="status"></div>
+  </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVtVPkS5EVtSjfA55YMouZYh3qb-2fIhCPHepTqu4pr3EIlpKhDQKkPRotbsTnX6ytww/exec";
+    let lokaalGegevens = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       const opslagStreef = localStorage.getItem('opgeslagenStreefGewicht') || "120";
       document.getElementById('streefGewicht').value = opslagStreef;
+      
+      const opgeslagenData = localStorage.getItem('dialyseHistorie');
+      if (opgeslagenData) {
+        lokaalGegevens = JSON.parse(opgeslagenData);
+      }
+      toonOverzichtTabel();
       herberekenAlles();
     });
+
+    function openTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(tb => tb.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      element.classList.add('active');
+    }
 
     function updateStreefGewicht() {
       const streefVal = document.getElementById('streefGewicht').value;
@@ -407,7 +459,6 @@
       const ingevoerdVeld = document.getElementById('ufIngevoerd');
       const werkelijkVeld = document.getElementById('ufWerkelijk');
 
-      // 1. UF Advies (Voor - Streef + 0.3)
       if (!isNaN(voor) && !isNaN(streef)) {
         const advies = parseFloat((voor - streef + 0.3).toFixed(2));
         adviesVeld.value = advies;
@@ -417,14 +468,12 @@
         adviesVeld.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
       }
 
-      // 2. UF Ingevoerd Kleurcodering
       if (!isNaN(ingevoerd)) {
         pasKleurToe(ingevoerdVeld, ingevoerd);
       } else {
         ingevoerdVeld.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
       }
 
-      // 3. UF Werkelijk (Voor - Na) & Kleurvergelijking t.o.v. Ingevoerd
       if (!isNaN(voor) && !isNaN(na)) {
         const werkelijk = parseFloat((voor - na).toFixed(2));
         werkelijkVeld.value = werkelijk;
@@ -443,6 +492,7 @@
       }
     }
 
+    // Formulieren opslaan
     document.getElementById('dialyseForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const btn = document.getElementById('btnSubmit');
@@ -452,7 +502,7 @@
       btn.innerText = "Bezig met opslaan...";
       status.style.backgroundColor = "#e2e8f0";
       status.style.color = "#334155";
-      status.innerText = "Verzenden naar Google Sheet...";
+      status.innerText = "Verzenden...";
 
       const payload = {
         afspraakDatumTijd: document.getElementById('afspraakDatumTijd').value,
@@ -476,6 +526,17 @@
         opmerking: document.getElementById('opmerking').value
       };
 
+      const bewerkIndex = parseInt(document.getElementById('bewerkIndex').value);
+      if (bewerkIndex >= 0) {
+        lokaalGegevens[bewerkIndex] = payload;
+        document.getElementById('bewerkIndex').value = "-1";
+      } else {
+        lokaalGegevens.unshift(payload); // Nieuwste bovenaan toevoegen
+      }
+
+      localStorage.setItem('dialyseHistorie', JSON.stringify(lokaalGegevens));
+      toonOverzichtTabel();
+
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -490,8 +551,6 @@
         const huidigStreef = document.getElementById('streefGewicht').value;
         document.getElementById('dialyseForm').reset();
         document.getElementById('streefGewicht').value = huidigStreef;
-        
-        // Reset standaard vinkjes voor Fragmin
         document.getElementById('f2500_1').checked = true;
         document.getElementById('f5000_1').checked = true;
 
@@ -502,13 +561,107 @@
       .catch(err => {
         status.style.backgroundColor = "#fee2e2";
         status.style.color = "#991b1b";
-        status.innerText = "Fout bij opslaan: " + err;
+        status.innerText = "Fout bij verzenden: " + err;
       })
       .finally(() => {
         btn.disabled = false;
         btn.innerText = "💾 Opslaan in Sheet";
       });
     });
+
+    // Tabel weergave
+    function toonOverzichtTabel() {
+      const tbody = document.getElementById('tabelInhoud');
+      tbody.innerHTML = '';
+
+      if (lokaalGegevens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Nog geen gegevens ingevoerd</td></tr>';
+        return;
+      }
+
+      lokaalGegevens.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <button class="btn-actie btn-edit" onclick="bewerkItem(${index})">✏️</button>
+            <button class="btn-actie btn-del" onclick="verwijderItem(${index})">🗑️</button>
+          </td>
+          <td>${item.afspraakDatumTijd || '-'}</td>
+          <td>${item.verpleegkundige || '-'}</td>
+          <td>${item.duur || '-'}</td>
+          <td>${item.gewichtVoor || '-'} kg</td>
+          <td>${item.gewichtNa || '-'} kg</td>
+          <td>${item.ufWerkelijk || '-'}</td>
+          <td>${item.opmerking || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function bewerkItem(index) {
+      const item = lokaalGegevens[index];
+      document.getElementById('bewerkIndex').value = index;
+
+      document.getElementById('afspraakDatumTijd').value = item.afspraakDatumTijd || '';
+      document.getElementById('startTijd').value = item.startTijd || '';
+      document.getElementById('eindTijd').value = item.eindTijd || '';
+      document.getElementById('streefGewicht').value = item.streefGewicht || '120';
+      document.getElementById('gewichtVoor').value = item.gewichtVoor || '';
+      document.getElementById('gewichtNa').value = item.gewichtNa || '';
+      document.getElementById('ufIngevoerd').value = item.ufIngevoerd || '';
+      document.getElementById('epo').value = item.epo || 'Nee';
+      document.getElementById('ijzer').value = item.ijzer || 'Nee';
+      document.getElementById('prikdag').value = item.prikdag || 'Nee';
+      document.getElementById('shuntflow').value = item.shuntflow || 'Nee';
+      document.getElementById('shuntflowUitkomst').value = item.shuntflowUitkomst || '';
+      document.getElementById('opmerking').value = item.opmerking || '';
+
+      berekenDuur();
+      herberekenAlles();
+      openTab('invoerTab', document.querySelectorAll('.tab-btn')[0]);
+    }
+
+    function verwijderItem(index) {
+      if (confirm('Weet je zeker dat je deze meting wilt verwijderen uit de lijst?')) {
+        lokaalGegevens.splice(index, 1);
+        localStorage.setItem('dialyseHistorie', JSON.stringify(lokaalGegevens));
+        toonOverzichtTabel();
+      }
+    }
+
+    // Export PDF
+    function exporteerPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Dialyse Overzicht", 14, 15);
+
+      const rows = lokaalGegevens.map(item => [
+        item.afspraakDatumTijd, item.verpleegkundige, item.duur, 
+        item.gewichtVoor, item.gewichtNa, item.ufWerkelijk, item.opmerking
+      ]);
+
+      doc.autoTable({
+        head: [['Afspraak', 'Verpleegkundige', 'Duur', 'Voor', 'Na', 'UF Werkelijk', 'Opmerking']],
+        body: rows,
+        startY: 20
+      });
+
+      doc.save("Dialyse_Overzicht.pdf");
+    }
+
+    // Export Excel / CSV
+    function exporteerExcel() {
+      let csv = "Afspraak;Verpleegkundige;Duur;Voor;Na;UF Werkelijk;Opmerking\n";
+      lokaalGegevens.forEach(item => {
+        csv += `"${item.afspraakDatumTijd}";"${item.verpleegkundige}";"${item.duur}";"${item.gewichtVoor}";"${item.gewichtNa}";"${item.ufWerkelijk}";"${item.opmerking}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Dialyse_Overzicht.csv";
+      link.click();
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js')
