@@ -103,7 +103,7 @@
       padding: 4px 0;
       font-size: 0.95rem;
     }
-    .vp-item input[type="checkbox"] {
+    .vp-item input[type="checkbox"], .med-check-group input[type="checkbox"] {
       width: auto;
       transform: scale(1.2);
     }
@@ -116,6 +116,21 @@
       font-size: 0.85rem;
       width: auto;
       white-space: nowrap;
+    }
+    .med-check-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .med-check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
     }
     button { 
       background-color: #0284c7; 
@@ -230,22 +245,38 @@
       <h2>💊 Medicatie</h2>
       <div class="grid-2">
         <div class="form-group">
-          <label for="fragmin2500">Fragmin 2500</label>
-          <input type="text" id="fragmin2500">
+          <label>Fragmin 2500</label>
+          <div class="med-check-group">
+            <div class="med-check-item"><input type="checkbox" name="f2500" value="1 toediening" id="f2500_1" checked><label for="f2500_1">1 toediening</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 2" id="f2500_2"><label for="f2500_2">Optie 2</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 3" id="f2500_3"><label for="f2500_3">Optie 3</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f2500" value="Optie 4" id="f2500_4"><label for="f2500_4">Optie 4</label></div>
+          </div>
         </div>
         <div class="form-group">
-          <label for="fragmin5000">Fragmin 5000</label>
-          <input type="text" id="fragmin5000">
+          <label>Fragmin 5000</label>
+          <div class="med-check-group">
+            <div class="med-check-item"><input type="checkbox" name="f5000" value="1 toediening" id="f5000_1" checked><label for="f5000_1">1 toediening</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 2" id="f5000_2"><label for="f5000_2">Optie 2</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 3" id="f5000_3"><label for="f5000_3">Optie 3</label></div>
+            <div class="med-check-item"><input type="checkbox" name="f5000" value="Optie 4" id="f5000_4"><label for="f5000_4">Optie 4</label></div>
+          </div>
         </div>
       </div>
       <div class="grid-2" style="margin-top: 10px;">
         <div class="form-group">
           <label for="epo">Epo</label>
-          <input type="text" id="epo">
+          <select id="epo">
+            <option value="Nee" selected>Nee</option>
+            <option value="Ja">Ja</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="ijzer">IJzer</label>
-          <input type="text" id="ijzer">
+          <select id="ijzer">
+            <option value="Nee" selected>Nee</option>
+            <option value="Ja">Ja</option>
+          </select>
         </div>
       </div>
     </div>
@@ -253,22 +284,28 @@
     <!-- Shunt & Opmerkingen -->
     <div class="card">
       <h2>🩸 Shunt & Notities</h2>
-      <div class="form-group">
-        <label for="prikdag">Prikdag</label>
-        <input type="text" id="prikdag">
-      </div>
       <div class="grid-2">
         <div class="form-group">
-          <label for="shuntflow">Shuntflow</label>
-          <input type="text" id="shuntflow">
+          <label for="prikdag">Prikdag</label>
+          <select id="prikdag">
+            <option value="Nee" selected>Nee</option>
+            <option value="Ja">Ja</option>
+          </select>
         </div>
         <div class="form-group">
-          <label for="shuntflowUitkomst">Uitkomst</label>
-          <input type="text" id="shuntflowUitkomst">
+          <label for="shuntflow">Shuntflow</label>
+          <select id="shuntflow">
+            <option value="Nee" selected>Nee</option>
+            <option value="Ja">Ja</option>
+          </select>
         </div>
       </div>
       <div class="form-group" style="margin-top: 10px;">
-        <label for="opmerking">Opmerking</label>
+        <label for="shuntflowUitkomst">Shuntflow Uitkomst (max 4 cijfers)</label>
+        <input type="number" id="shuntflowUitkomst" placeholder="bijv. 1200" oninput="valideerVierCijfers(this)">
+      </div>
+      <div class="form-group" style="margin-top: 10px;">
+        <label for="opmerking">Bijzonderheden</label>
         <textarea id="opmerking" rows="3" placeholder="Bijzonderheden..."></textarea>
       </div>
     </div>
@@ -281,7 +318,6 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVtVPkS5EVtSjfA55YMouZYh3qb-2fIhCPHepTqu4pr3EIlpKhDQKkPRotbsTnX6ytww/exec";
 
-    // Bij het laden van de pagina: Streefgewicht ophalen uit opslag (of 120 als standaard)
     window.addEventListener('DOMContentLoaded', () => {
       const opslagStreef = localStorage.getItem('opgeslagenStreefGewicht') || "120";
       document.getElementById('streefGewicht').value = opslagStreef;
@@ -294,6 +330,12 @@
         localStorage.setItem('opgeslagenStreefGewicht', streefVal);
       }
       herberekenAlles();
+    }
+
+    function valideerVierCijfers(element) {
+      if (element.value.length > 4) {
+        element.value = element.value.slice(0, 4);
+      }
     }
 
     function berekenDuur() {
@@ -334,8 +376,12 @@
 
     function haalGeselecteerdeVerpleegkundigen() {
       const checkboxes = document.querySelectorAll('#vpLijst input[type="checkbox"]:checked');
-      const namen = Array.from(checkboxes).map(cb => cb.value);
-      return namen.join(', ');
+      return Array.from(checkboxes).map(cb => cb.value).join(', ');
+    }
+
+    function haalGeselecteerdeCheckboxes(naam) {
+      const checkboxes = document.querySelectorAll(`input[name="${naam}"]:checked`);
+      return Array.from(checkboxes).map(cb => cb.value).join(', ');
     }
 
     function pasKleurToe(element, waarde) {
@@ -420,8 +466,8 @@
         ufAdvies: document.getElementById('ufAdvies').value,
         ufIngevoerd: document.getElementById('ufIngevoerd').value,
         ufWerkelijk: document.getElementById('ufWerkelijk').value,
-        fragmin2500: document.getElementById('fragmin2500').value,
-        fragmin5000: document.getElementById('fragmin5000').value,
+        fragmin2500: haalGeselecteerdeCheckboxes('f2500'),
+        fragmin5000: haalGeselecteerdeCheckboxes('f5000'),
         epo: document.getElementById('epo').value,
         ijzer: document.getElementById('ijzer').value,
         prikdag: document.getElementById('prikdag').value,
@@ -441,11 +487,14 @@
         status.style.color = "#166534";
         status.innerText = "✓ Gegevens succesvol opgeslagen!";
         
-        // Bewaar Streefgewicht bij het legen van het formulier
         const huidigStreef = document.getElementById('streefGewicht').value;
         document.getElementById('dialyseForm').reset();
         document.getElementById('streefGewicht').value = huidigStreef;
         
+        // Reset standaard vinkjes voor Fragmin
+        document.getElementById('f2500_1').checked = true;
+        document.getElementById('f5000_1').checked = true;
+
         document.getElementById('duurWeergave').value = "";
         herberekenAlles();
         window.scrollTo({ top: 0, behavior: 'smooth' });
