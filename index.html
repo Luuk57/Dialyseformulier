@@ -63,7 +63,7 @@
       background-color: #f8fafc;
       color: #0f172a;
       outline: none;
-      transition: border-color 0.2s, background-color 0.2s;
+      transition: border-color 0.2s, background-color 0.2s, color 0.2s;
     }
     input:focus, select:focus, textarea:focus {
       border-color: #0284c7;
@@ -74,6 +74,12 @@
       color: #64748b;
       font-weight: bold;
     }
+
+    /* Kleurcodering voor UF velden */
+    .uf-groen { background-color: #dcfce7 !important; color: #166534 !important; font-weight: bold; border-color: #86efac !important; }
+    .uf-oranje { background-color: #ffedd5 !important; color: #9a3412 !important; font-weight: bold; border-color: #fdba74 !important; }
+    .uf-rood { background-color: #fee2e2 !important; color: #991b1b !important; font-weight: bold; border-color: #fca5a5 !important; }
+
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -190,17 +196,17 @@
       <div class="grid-2">
         <div class="form-group">
           <label for="streefGewicht">Streef (kg)</label>
-          <input type="number" step="0.1" id="streefGewicht" value="109.0" oninput="berekenUFAdvies()">
+          <input type="number" step="0.1" id="streefGewicht" oninput="updateStreefGewicht()">
         </div>
         <div class="form-group">
           <label for="gewichtVoor">Voor (kg)</label>
-          <input type="number" step="0.1" id="gewichtVoor" placeholder="0.0" oninput="berekenUFAdvies()">
+          <input type="number" step="0.1" id="gewichtVoor" placeholder="0.0" oninput="herberekenAlles()">
         </div>
       </div>
       <div class="grid-2" style="margin-top: 10px;">
         <div class="form-group">
           <label for="gewichtNa">Na (kg)</label>
-          <input type="number" step="0.1" id="gewichtNa" placeholder="0.0">
+          <input type="number" step="0.1" id="gewichtNa" placeholder="0.0" oninput="herberekenAlles()">
         </div>
         <div class="form-group">
           <label for="ufAdvies">UF Advies</label>
@@ -210,11 +216,11 @@
       <div class="grid-2" style="margin-top: 10px;">
         <div class="form-group">
           <label for="ufIngevoerd">UF Ingevoerd</label>
-          <input type="number" step="0.1" id="ufIngevoerd">
+          <input type="number" step="0.1" id="ufIngevoerd" oninput="herberekenAlles()">
         </div>
         <div class="form-group">
-          <label for="ufWerkelijk">UF Werkelijk</label>
-          <input type="number" step="0.1" id="ufWerkelijk">
+          <label for="ufWerkelijk">UF Werkelijk (Voor - Na)</label>
+          <input type="number" step="0.1" id="ufWerkelijk" readonly placeholder="Auto">
         </div>
       </div>
     </div>
@@ -275,6 +281,21 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVtVPkS5EVtSjfA55YMouZYh3qb-2fIhCPHepTqu4pr3EIlpKhDQKkPRotbsTnX6ytww/exec";
 
+    // Bij het laden van de pagina: Streefgewicht ophalen uit opslag (of 120 als standaard)
+    window.addEventListener('DOMContentLoaded', () => {
+      const opslagStreef = localStorage.getItem('opgeslagenStreefGewicht') || "120";
+      document.getElementById('streefGewicht').value = opslagStreef;
+      herberekenAlles();
+    });
+
+    function updateStreefGewicht() {
+      const streefVal = document.getElementById('streefGewicht').value;
+      if (streefVal) {
+        localStorage.setItem('opgeslagenStreefGewicht', streefVal);
+      }
+      herberekenAlles();
+    }
+
     function berekenDuur() {
       const start = document.getElementById('startTijd').value;
       const eind = document.getElementById('eindTijd').value;
@@ -317,13 +338,62 @@
       return namen.join(', ');
     }
 
-    function berekenUFAdvies() {
-      const voor = parseFloat(document.getElementById('gewichtVoor').value);
-      const streef = parseFloat(document.getElementById('streefGewicht').value);
-      if (!isNaN(voor) && !isNaN(streef)) {
-        document.getElementById('ufAdvies').value = (voor - streef + 0.3).toFixed(2);
+    function pasKleurToe(element, waarde) {
+      element.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
+      if (isNaN(waarde) || waarde === '' || waarde === null) return;
+
+      if (waarde <= 2.5) {
+        element.classList.add('uf-groen');
+      } else if (waarde <= 3.3) {
+        element.classList.add('uf-oranje');
       } else {
-        document.getElementById('ufAdvies').value = '';
+        element.classList.add('uf-rood');
+      }
+    }
+
+    function herberekenAlles() {
+      const voor = parseFloat(document.getElementById('gewichtVoor').value);
+      const na = parseFloat(document.getElementById('gewichtNa').value);
+      const streef = parseFloat(document.getElementById('streefGewicht').value);
+      const ingevoerd = parseFloat(document.getElementById('ufIngevoerd').value);
+
+      const adviesVeld = document.getElementById('ufAdvies');
+      const ingevoerdVeld = document.getElementById('ufIngevoerd');
+      const werkelijkVeld = document.getElementById('ufWerkelijk');
+
+      // 1. UF Advies (Voor - Streef + 0.3)
+      if (!isNaN(voor) && !isNaN(streef)) {
+        const advies = parseFloat((voor - streef + 0.3).toFixed(2));
+        adviesVeld.value = advies;
+        pasKleurToe(adviesVeld, advies);
+      } else {
+        adviesVeld.value = '';
+        adviesVeld.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
+      }
+
+      // 2. UF Ingevoerd Kleurcodering
+      if (!isNaN(ingevoerd)) {
+        pasKleurToe(ingevoerdVeld, ingevoerd);
+      } else {
+        ingevoerdVeld.classList.remove('uf-groen', 'uf-oranje', 'uf-rood');
+      }
+
+      // 3. UF Werkelijk (Voor - Na) & Kleurvergelijking t.o.v. Ingevoerd
+      if (!isNaN(voor) && !isNaN(na)) {
+        const werkelijk = parseFloat((voor - na).toFixed(2));
+        werkelijkVeld.value = werkelijk;
+
+        werkelijkVeld.classList.remove('uf-groen', 'uf-rood');
+        if (!isNaN(ingevoerd)) {
+          if (werkelijk <= ingevoerd) {
+            werkelijkVeld.classList.add('uf-groen');
+          } else {
+            werkelijkVeld.classList.add('uf-rood');
+          }
+        }
+      } else {
+        werkelijkVeld.value = '';
+        werkelijkVeld.classList.remove('uf-groen', 'uf-rood');
       }
     }
 
@@ -370,9 +440,14 @@
         status.style.backgroundColor = "#dcfce7";
         status.style.color = "#166534";
         status.innerText = "✓ Gegevens succesvol opgeslagen!";
+        
+        // Bewaar Streefgewicht bij het legen van het formulier
+        const huidigStreef = document.getElementById('streefGewicht').value;
         document.getElementById('dialyseForm').reset();
-        document.getElementById('streefGewicht').value = "109.0";
+        document.getElementById('streefGewicht').value = huidigStreef;
+        
         document.getElementById('duurWeergave').value = "";
+        herberekenAlles();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       })
       .catch(err => {
